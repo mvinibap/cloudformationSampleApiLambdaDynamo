@@ -1,0 +1,23 @@
+{
+    "name": "my-function",
+    "version": "1.0.0",
+    "description": "Teste para deploy de lambda e dynamo com cf",
+    "main": "server.js",
+    "scripts": {
+        "test": "jest",
+        "deploy": "aws cloudformation deploy --template-file cloudformation.yml --stack-name testCloudformation --capabilities CAPABILITY_IAM"
+    },
+    "author": "Marcus Baptista",
+    "license": "ISC",
+    "dependencies": {
+        "aws-sdk": "^2.897.0",
+        "circular-json": "^0.5.9",
+        "dotenv": "^8.2.0",
+        "express": "^4.17.1",
+        "moment": "^2.29.1",
+        "winston": "^3.3.3"
+    },
+    "devDependencies": {
+        "jest": "^26.6.3"
+    }
+}

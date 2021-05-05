@@ -5,7 +5,7 @@
     "main": "server.js",
     "scripts": {
         "test": "jest",
-        "deploy": "aws cloudformation deploy --template-file cloudformation.yml --stack-name testCloudformation --capabilities CAPABILITY_IAM"
+        "deploy": "aws cloudformation deploy --template-file ./cloudformation/cloudformation.yml --stack-name cloudformationSample --capabilities CAPABILITY_IAM"
     },
     "author": "Marcus Baptista",
     "license": "ISC",

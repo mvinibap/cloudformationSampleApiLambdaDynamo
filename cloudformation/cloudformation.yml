@@ -52,7 +52,16 @@ Resources:
     Properties:
       RestApiId: !Ref ApiGatewaySample
       StageName: !Ref apiGatewayStageName
+      StageDescription:
+        AccessLogSetting: 
+          DestinationArn: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/apigateway/${apiGatewayName}:*
+          Format: '$context.identity.sourceIp $context.authorizer.claims.sub [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.requestId $context.awsEndpointRequestId $context.xrayTraceId $context.responseLatency $context.integrationLatency "$context.error.message"'
 
+  ApiGatewayAccountConfig:
+    Type: "AWS::ApiGateway::Account"
+    Properties:
+      CloudWatchRoleArn: !GetAtt "ApiGatewayPushToCloudWatchRole.Arn"
+      
   LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -83,6 +92,21 @@ Resources:
       # note: if route *not* at API Gateway root, `SourceArn` would take the form of:
       #               arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${apiGateway}/${apiGatewayStageName}/${apiGatewayHTTPMethod}/PATH_PART
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewaySample}/${apiGatewayStageName}/${apiGatewayHTTPMethodGet}/
+
+  ApiGatewayPushToCloudWatchRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "apigateway.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 
   LambdaIAMRole:
     Type: AWS::IAM::Role

@@ -66,19 +66,12 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Code:
-        ZipFile: |
-          exports.handler = async event => {
-            console.log("Starting base-route-get");
-            const response = {
-              statusCode: 200,
-              body: "Sucesso",
-            };
-
-            return response;
-          }
+        S3Bucket: lambda-zip-1234
+        S3Key: !Sub my-api.zip
+        # ZipFile: ../my-api.zip
       Description: Example Lambda function
       FunctionName: !Ref lambdaFunctionName
-      Handler: index.handler
+      Handler: src/handlers/base-route-get.run
       MemorySize: 128
       Role: !GetAtt LambdaIAMRole.Arn
       Runtime: !Ref runtime

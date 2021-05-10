@@ -20,6 +20,13 @@ Parameters:
   runtime:
     Type: String
     Default: nodejs12.x
+  
+  lambdaFunctionVersion:
+    Type: String
+  
+  tableName:
+    Type: String
+    Default: TableSample
     
 Resources:
   ApiGatewaySample:
@@ -38,10 +45,14 @@ Resources:
       HttpMethod: GET
       Integration:
         IntegrationHttpMethod: POST
+        RequestParameters:
+          integration.request.path.proxy: 'method.request.path.proxy'
         Type: AWS_PROXY
         Uri: !Sub
           - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
           - lambdaArn: !GetAtt LambdaFunction.Arn
+      RequestParameters:
+          method.request.path.proxy: true
       ResourceId: !GetAtt ApiGatewaySample.RootResourceId
       RestApiId: !Ref ApiGatewaySample
 
@@ -67,7 +78,7 @@ Resources:
     Properties:
       Code:
         S3Bucket: lambda-zip-1234
-        S3Key: !Sub my-api.zip
+        S3Key: !Sub my-api-${lambdaFunctionVersion}.zip
         # ZipFile: ../my-api.zip
       Description: Example Lambda function
       FunctionName: !Ref lambdaFunctionName
@@ -75,6 +86,10 @@ Resources:
       MemorySize: 128
       Role: !GetAtt LambdaIAMRole.Arn
       Runtime: !Ref runtime
+      Environment:
+        Variables:
+          EV_REGION: !Sub ${AWS::Region}
+          LAMBDA_VERSION: !Ref lambdaFunctionVersion
 
   LambdaApiGatewayInvoke:
     Type: AWS::Lambda::Permission
@@ -117,14 +132,23 @@ Resources:
         - PolicyDocument:
             Version: 2012-10-17
             Statement:
-              - Action:
+              -
+                Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource:
+                  - !Sub arn:aws:dynamodb:*:*:table/${tableName}
+                  - !Sub arn:aws:dynamodb:*:*:table/${tableName}/*
+              - 
+                Effect: Allow
+                Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                Effect: Allow
                 Resource:
                   - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${lambdaFunctionName}:*
           PolicyName: lambda
+
 
   LambdaLogGroup:
     Type: AWS::Logs::LogGroup
@@ -135,7 +159,7 @@ Resources:
   TableSample:
     Type: 'AWS::DynamoDB::Table'
     Properties:
-      TableName: TableSample
+      TableName: !Ref tableName
       AttributeDefinitions:
         - AttributeName: HashId
           AttributeType: S

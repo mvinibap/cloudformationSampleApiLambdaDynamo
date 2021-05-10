@@ -3,7 +3,7 @@ AWS.config.update({ region: 'sa-east-1' });
 var dynamodbClient = new AWS.DynamoDB.DocumentClient();
 const tableName = 'TableSample';
 
-const logger = require("./custom-logs");
+const logger = require("./logger");
 
 const { monitoring, OK, NOK } = require("../utils/monitoring");
 
@@ -19,7 +19,7 @@ var getTableDoc = async (hashId) => {
     }
   };
 
-  logger.info({ uuid, xUuid, message: [`Getting doc id ${hashId} on DynamoDb table ${tableName}`] });
+  logger.info({ uuid, message: [`Getting doc id ${hashId} on DynamoDb table ${tableName}`] });
 
   return await new Promise((resolve, reject) => {
     dynamodbClient.query(params, function (error, data) {
@@ -27,7 +27,7 @@ var getTableDoc = async (hashId) => {
         monitoring("getTableDoc", NOK, error.message);
         reject(error);
       } else {
-        monitoring("getTableDoc", OK);
+        monitoring("getTableDoc", OK, `Found register id ${hashId} successfully`);
         resolve(data);
       }
     });

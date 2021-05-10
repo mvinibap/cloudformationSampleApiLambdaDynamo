@@ -10,8 +10,8 @@ var monitoring = async (operationType, status, message) => {
     uuid,
     timestamp: dateTime,
     operationType,
-    status: status,
-    message: { message: message }
+    status,
+    message: [message]
   });
 };
 

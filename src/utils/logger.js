@@ -1,4 +1,4 @@
-const { logger } = require("./custom-logs");
+const logger = require("./custom-logs");
 
 var info = async (messageObj) => {
   logger.info(messageObj);

@@ -1,22 +1,34 @@
 const JSON = require('circular-json');
-
 const logger = require("../utils/logger");
-
 const dynamoDb = require('../utils/dynamodb-ultils');
+const { makeResponse } = require("../utils/response");
+const lambdaVersion = process.env.LAMBDA_VERSION
+const httpStatus = require("http-status");
 
 exports.run = async event => {
 
-  uuid = '1';
-  xUuid = '3'
+  uuid = event.requestContext.requestId;
 
-  logger.info({ uuid, xUuid, message: [`Starting base-route-get`] });
+  logger.info({ uuid, message: [`Starting base-route-get version ${lambdaVersion}`] });
 
-  // var x = await dynamoDb.getTableDoc('1');
+  logger.info(event);
 
-  const response = {
-    statusCode: 200,
-    body: "Sucesso from src/handlers/base-route-get.js",
+  const registerId = event.queryStringParameters.id;
+
+  var dynamoObj = await dynamoDb.getTableDoc(registerId);
+
+  logger.info(JSON.stringify(dynamoObj))
+
+  var response;
+  if (dynamoObj.Items.length > 0) {
+    response = {
+      HashId: dynamoObj.Items[0].HashId,
+      RangeId: dynamoObj.Items[0].RangeId,
+      IndexSample: dynamoObj.Items[0].IndexSample
+    };
+  } else {
+    response = "No register found";
   };
 
-  return response;
-};
+  return await makeResponse(httpStatus.OK, { message: response }, "base-rout-get-response");
+}

@@ -1,34 +1,36 @@
 const JSON = require('circular-json');
-const logger = require("../utils/logger");
-const dynamoDb = require('../utils/dynamodb-ultils');
-const { makeResponse } = require("../utils/response");
+const logger = require('../utils/logger');
+const { getDocumentById } = require('../services/base-route-get-services')
+const { makeResponse } = require('../utils/response');
 const lambdaVersion = process.env.LAMBDA_VERSION
-const httpStatus = require("http-status");
+const httpStatus = require('http-status');
+const { operationType } = require('../utils/enums');
+const ApplicationResponseException = require("../custom-exception/ApplicationResponseException");
 
 exports.run = async event => {
 
   uuid = event.requestContext.requestId;
 
-  logger.info({ uuid, message: [`Starting base-route-get version ${lambdaVersion}`] });
+  try {
 
-  logger.info(event);
+    logger.info({ uuid, message: `Starting base-route-get version ${lambdaVersion}` });
 
-  const registerId = event.queryStringParameters.id;
+    const id = event.queryStringParameters.id;
+    var response = await getDocumentById(id);
 
-  var dynamoObj = await dynamoDb.getTableDoc(registerId);
+    return await makeResponse(httpStatus.OK, response, operationType.BASE_ROUTE_GET_RESPONSE);
 
-  logger.info(JSON.stringify(dynamoObj))
+  } catch (error) {
 
-  var response;
-  if (dynamoObj.Items.length > 0) {
-    response = {
-      HashId: dynamoObj.Items[0].HashId,
-      RangeId: dynamoObj.Items[0].RangeId,
-      IndexSample: dynamoObj.Items[0].IndexSample
-    };
-  } else {
-    response = "No register found";
-  };
+    if (error instanceof ApplicationResponseException) {
+      return await makeResponse(error.httpCode, error.message, operationType.BASE_ROUTE_GET_RESPONSE);
+    }
 
-  return await makeResponse(httpStatus.OK, { message: response }, "base-rout-get-response");
+    logger.error({ uuid, message: [error.message, error.stack] });
+
+    return await makeResponse(httpStatus.INTERNAL_SERVER_ERROR, { message: "Try again soon." }, operationType.BASE_ROUTE_GET_RESPONSE);
+
+  }
+
+
 }

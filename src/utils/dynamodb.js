@@ -7,7 +7,8 @@ const logger = require("./logger");
 
 const { monitoring, OK, NOK } = require("../utils/monitoring");
 
-var getTableDoc = async (hashId) => {
+var queryTableById = async (hashId) => {
+
   var params = {
     TableName: tableName,
     KeyConditionExpression: "#id = :id",
@@ -19,7 +20,7 @@ var getTableDoc = async (hashId) => {
     }
   };
 
-  logger.info({ uuid, message: [`Getting doc id ${hashId} on DynamoDb table ${tableName}`] });
+  logger.info({ uuid, message: `Getting doc id ${hashId} on DynamoDb table ${tableName}` });
 
   return await new Promise((resolve, reject) => {
     dynamodbClient.query(params, function (error, data) {
@@ -27,13 +28,14 @@ var getTableDoc = async (hashId) => {
         monitoring("getTableDoc", NOK, error.message);
         reject(error);
       } else {
-        monitoring("getTableDoc", OK, `Found register id ${hashId} successfully`);
+        monitoring("getTableDoc", OK, `Query on table ${tableName} returned ${data.Items.length} items`);
         resolve(data);
       }
     });
   });
+
 };
 
 module.exports = {
-  getTableDoc
+  queryTableById
 }

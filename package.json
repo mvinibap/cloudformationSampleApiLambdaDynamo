@@ -17,6 +17,7 @@
         "express": "^4.17.1",
         "http-status": "^1.5.0",
         "moment": "^2.29.1",
+        "validate": "^5.1.0",
         "winston": "^3.3.3"
     },
     "devDependencies": {

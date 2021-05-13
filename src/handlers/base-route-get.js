@@ -1,4 +1,3 @@
-const JSON = require('circular-json');
 const logger = require('../utils/logger');
 const { getDocumentById } = require('../services/base-route-get-services')
 const { makeResponse } = require('../utils/response');

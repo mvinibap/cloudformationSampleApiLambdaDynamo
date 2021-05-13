@@ -15,7 +15,7 @@ const logger = winston.createLogger({
         xUuid: info.xUuid,
         operationType: info.operationType,
         level: info.level,
-        httpStatus: info.httpStatus,
+        status: info.status,
         timestamp: info.timestamp,
         message: info.message
       };

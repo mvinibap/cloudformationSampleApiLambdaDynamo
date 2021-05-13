@@ -20,7 +20,7 @@ var queryTableById = async (hashId) => {
     }
   };
 
-  logger.info({ uuid, message: `Getting doc id ${hashId} on DynamoDb table ${tableName}` });
+  logger.info({ uuid, message: [`Getting doc id ${hashId} on DynamoDb table ${tableName}`] });
 
   return await new Promise((resolve, reject) => {
     dynamodbClient.query(params, function (error, data) {

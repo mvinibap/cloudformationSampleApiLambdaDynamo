@@ -7,7 +7,8 @@ var getDocumentById = async (id) => {
 
   try {
 
-    logger.info({ uuid, message: `Getting document by id ${id}` });
+    logger.info({ uuid, message: [`Getting document by id ${id}`] });
+    logger.info({ uuid, message: [`Starting base-route-get version`] });
 
     var dynamoObj = await dynamoDb.queryTableById(id);
 

@@ -13,9 +13,9 @@ exports.run = async event => {
 
   try {
 
-    logger.info({ uuid, message: `Starting base-route-get version ${lambdaVersion}` });
+    logger.info({ uuid, message: [`Starting base-route-get version ${lambdaVersion}`] });
 
-    const id = event.queryStringParameters.id;
+    const id = event.pathParameters.id;
     var response = await getDocumentById(id);
 
     return await makeResponse(httpStatus.OK, response, operationType.BASE_ROUTE_GET_RESPONSE);

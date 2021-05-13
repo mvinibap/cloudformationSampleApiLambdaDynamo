@@ -3,7 +3,7 @@ require("dotenv").config();
 
 var event = {
   pathParameters: {
-    // id: "1"
+    id: "1"
   },
   queryStringParameters: {
     // page: 20,

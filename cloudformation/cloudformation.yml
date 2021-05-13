@@ -7,7 +7,7 @@ Parameters:
   
   apiGatewayStageName:
     Type: String
-    Default: call
+    Default: stage
   
   apiGatewayHTTPMethodGet:
     Type: String
@@ -38,6 +38,15 @@ Resources:
           - REGIONAL
       Name: !Ref apiGatewayName
 
+  ApiGatewayResourceGetId:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGatewaySample
+      ParentId: !GetAtt 
+        - ApiGatewaySample
+        - RootResourceId
+      PathPart: "{id}"
+
   ApiGatewayMethodGet:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -48,12 +57,11 @@ Resources:
         RequestParameters:
           integration.request.path.proxy: 'method.request.path.proxy'
         Type: AWS_PROXY
-        Uri: !Sub
-          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
-          - lambdaArn: !GetAtt LambdaFunction.Arn
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}/invocations
       RequestParameters:
-          method.request.path.proxy: true
-      ResourceId: !GetAtt ApiGatewaySample.RootResourceId
+        method.request.path.proxy: true
+      ResourceId: !Ref ApiGatewayResourceGetId
       RestApiId: !Ref ApiGatewaySample
 
   ApiGatewayDeployment:
@@ -79,7 +87,6 @@ Resources:
       Code:
         S3Bucket: mvinibap-lambda-code-source
         S3Key: !Sub my-api-${lambdaFunctionVersion}.zip
-        # ZipFile: ../my-api.zip
       Description: Example Lambda function
       FunctionName: !Ref lambdaFunctionName
       Handler: src/handlers/base-route-get.run
@@ -97,9 +104,10 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt LambdaFunction.Arn
       Principal: apigateway.amazonaws.com
-      # note: if route *not* at API Gateway root, `SourceArn` would take the form of:
-      #               arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${apiGateway}/${apiGatewayStageName}/${apiGatewayHTTPMethod}/PATH_PART
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewaySample}/${apiGatewayStageName}/${apiGatewayHTTPMethodGet}/
+      SourceArn:
+        Fn::Sub:
+        - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${__ApiId__}/*/*/*
+        - __ApiId__: !Ref ApiGatewaySample
 
   ApiGatewayPushToCloudWatchRole:
     Type: "AWS::IAM::Role"
@@ -112,7 +120,6 @@ Resources:
               Service:
                 - "apigateway.amazonaws.com"
             Action: "sts:AssumeRole"
-      Path: "/"
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 

@@ -13,9 +13,13 @@ Parameters:
     Type: String
     Default: GET
   
-  lambdaFunctionName:
+  lambdaFunctionNameGet:
     Type: String
-    Default: my-function
+    Default: sample-function-get
+
+  lambdaFunctionNamePost:
+    Type: String
+    Default: sample-function-post
   
   runtime:
     Type: String
@@ -29,6 +33,12 @@ Parameters:
     Default: TableSample
     
 Resources:
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/apigateway/${apiGatewayName}
+      RetentionInDays: 90
+
   ApiGatewaySample:
     Type: AWS::ApiGateway::RestApi
     Properties:
@@ -58,10 +68,29 @@ Resources:
           integration.request.path.proxy: 'method.request.path.proxy'
         Type: AWS_PROXY
         Uri: !Sub >-
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}/invocations
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunctionGet.Arn}/invocations
       RequestParameters:
         method.request.path.proxy: true
       ResourceId: !Ref ApiGatewayResourceGetId
+      RestApiId: !Ref ApiGatewaySample
+  
+  ApiGatewayMethodPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        RequestParameters:
+          integration.request.path.proxy: 'method.request.path.proxy'
+        Type: AWS_PROXY
+        Uri: !Sub >-
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunctionPost.Arn}/invocations
+      RequestParameters:
+        method.request.path.proxy: true
+      ResourceId: !GetAtt 
+        - ApiGatewaySample
+        - RootResourceId
       RestApiId: !Ref ApiGatewaySample
 
   ApiGatewayDeployment:
@@ -81,14 +110,14 @@ Resources:
     Properties:
       CloudWatchRoleArn: !GetAtt "ApiGatewayPushToCloudWatchRole.Arn"
 
-  LambdaFunction:
+  LambdaFunctionGet:
     Type: AWS::Lambda::Function
     Properties:
       Code:
         S3Bucket: mvinibap-lambda-code-source
         S3Key: !Sub my-api-${lambdaFunctionVersion}.zip
       Description: Example Lambda function
-      FunctionName: !Ref lambdaFunctionName
+      FunctionName: !Ref lambdaFunctionNameGet
       Handler: src/handlers/base-route-get.run
       MemorySize: 128
       Role: !GetAtt LambdaIAMRole.Arn
@@ -98,11 +127,39 @@ Resources:
           EV_REGION: !Sub ${AWS::Region}
           LAMBDA_VERSION: !Ref lambdaFunctionVersion
 
-  LambdaApiGatewayInvoke:
+  LambdaFunctionPost:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: mvinibap-lambda-code-source
+        S3Key: !Sub my-api-${lambdaFunctionVersion}.zip
+      Description: Example Lambda function
+      FunctionName: !Ref lambdaFunctionNamePost
+      Handler: src/handlers/base-route-post.run
+      MemorySize: 128
+      Role: !GetAtt LambdaIAMRole.Arn
+      Runtime: !Ref runtime
+      Environment:
+        Variables:
+          EV_REGION: !Sub ${AWS::Region}
+          LAMBDA_VERSION: !Ref lambdaFunctionVersion
+
+  LambdaApiGatewayInvokeGet:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt LambdaFunction.Arn
+      FunctionName: !GetAtt LambdaFunctionGet.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub:
+        - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${__ApiId__}/*/*/*
+        - __ApiId__: !Ref ApiGatewaySample
+  
+  LambdaApiGatewayInvokePost:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt LambdaFunctionPost.Arn
       Principal: apigateway.amazonaws.com
       SourceArn:
         Fn::Sub:
@@ -153,15 +210,9 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${lambdaFunctionName}:*
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${lambdaFunctionNameGet}:*
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${lambdaFunctionNamePost}:*
           PolicyName: lambda
-
-
-  LambdaLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /aws/lambda/${lambdaFunctionName}
-      RetentionInDays: 90
 
   TableSample:
     Type: 'AWS::DynamoDB::Table'

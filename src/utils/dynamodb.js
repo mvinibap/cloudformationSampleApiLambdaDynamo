@@ -44,6 +44,8 @@ var putObjectIntoTable = async (body) => {
     }
   };
 
+  logger.info(params)
+
   return await new Promise((resolve, reject) => {
     dynamodbClient.put(params, (error, data) => {
       if (error) {
@@ -52,7 +54,7 @@ var putObjectIntoTable = async (body) => {
         reject(error);
       } else {
         monitoring(operationType.PUT_OBJECT_INTO_TABLE, OK, "Object saved successfully");
-        resolve(data);
+        resolve(params.Item);
       }
     });
   });

@@ -14,12 +14,13 @@ exports.run = async event => {
   try {
 
     logger.info({ uuid, message: [`Starting base-route-post version ${lambdaVersion}`] });
+    logger.info(event);
 
     var body = await validatePost(event.body);
 
-    await services.saveObject(body);
+    var dynamoResponse = await services.saveObject(body);
 
-    var response = { message: "Deu bom" }
+    var response = { ...dynamoResponse }
 
     return await makeResponse(httpStatus.CREATED, response, operationType.BASE_ROUTE_POST_RESPONSE);
 

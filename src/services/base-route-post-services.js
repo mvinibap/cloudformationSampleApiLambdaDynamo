@@ -9,7 +9,9 @@ var saveObject = async (body) => {
 
     logger.info({ uuid, message: [`Saving object`] });
 
-    await dynamoDb.putObjectIntoTable(body);
+    var response = await dynamoDb.putObjectIntoTable(body);
+
+    return response;
 
   } catch (error) {
 

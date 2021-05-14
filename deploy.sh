@@ -1,4 +1,4 @@
-lambda_version="0.0.1"
+lambda_version="0.0.7"
 
 npm install
 zip -r my-api-$lambda_version.zip src node_modules cloudformation package.json

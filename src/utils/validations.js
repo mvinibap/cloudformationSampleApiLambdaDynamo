@@ -8,6 +8,9 @@ var validatePost = async body => {
 
   logger.info({ uuid, message: ["Starting validations body for post method"] });
 
+  if (body == null || body === undefined)
+    throw new ApplicationResponseException(httpStatus.BAD_REQUEST, { message: "Body payload is required" });
+
   var body = JSON.parse(body);
 
   let arrErros = postSchema.validate(body);

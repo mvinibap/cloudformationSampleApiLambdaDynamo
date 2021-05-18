@@ -13,6 +13,9 @@ Parameters:
     Type: String
     Default: GET
   
+  cognitoUserPool:
+    Type: String
+  
   lambdaFunctionNameGet:
     Type: String
     Default: sample-function-get
@@ -60,7 +63,8 @@ Resources:
   ApiGatewayMethodGet:
     Type: AWS::ApiGateway::Method
     Properties:
-      AuthorizationType: NONE
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ApiCognitoAuthorizer
       HttpMethod: GET
       Integration:
         IntegrationHttpMethod: POST
@@ -77,7 +81,8 @@ Resources:
   ApiGatewayMethodPost:
     Type: AWS::ApiGateway::Method
     Properties:
-      AuthorizationType: NONE
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ApiCognitoAuthorizer
       HttpMethod: POST
       Integration:
         IntegrationHttpMethod: POST
@@ -92,6 +97,16 @@ Resources:
         - ApiGatewaySample
         - RootResourceId
       RestApiId: !Ref ApiGatewaySample
+
+  ApiCognitoAuthorizer:          
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      IdentitySource: method.request.header.Authorization
+      Name: cognitoAuth
+      ProviderARNs: 
+        - !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${cognitoUserPool}
+      RestApiId: !Ref ApiGatewaySample
+      Type: COGNITO_USER_POOLS
 
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
